@@ -1,10 +1,10 @@
 #include "mainwindow.h"
 #include "./ui_mainwindow.h"
-#include "viewerwindow.h"
 
 #include <functional>
 #include <vector>
 #include "com_ports.h"
+#include <QString>
 
 
 MainWindow::MainWindow(QWidget *parent, std::function<void(int32_t)> close_callback)
@@ -21,7 +21,7 @@ void MainWindow::RescanPorts() {
     ports_ = com_ports::FetchCOMPorts();
     ui->comBox->clear();
     for (int32_t i{0}; i < ports_.size(); ++i) {
-        ui->comBox->addItem(ports_.at(i).friendly_name);
+        ui->comBox->addItem(QString::fromStdString(ports_.at(i).friendly_name));
     }
 }
 

@@ -12,33 +12,43 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
 
-set(PROJECT_SOURCES
-        src/main.cpp
-        src/mainwindow.cpp
-        include/mainwindow.h
-        src/mainwindow.ui
-        include/com_ports.h
-        src/com_ports.cpp
-        include/viewerwindow.h
-        src/viewerwindow.cpp
-        src/viewerwindow.ui
-        include/window_manager.h
-        src/window_manager.cpp
-        include/inputviewer.h
-        src/inputviewer.cpp
-        viewers/viewer.h
-        viewers/n64/n64_viewer.h
-        viewers/n64/n64_viewer.cpp
-        include/input_items.h
-        src/input_items.cpp
+set(INCLUDE_COMMON "include/common")
+set(SRC_COMMON "src/common")
+
+set(INCLUDE_QT "include/qt")
+set(SRC_QT "src/qt")
+
+set(QT_PROJECT_SOURCES
+        ${SRC_QT}/main.cpp
+        ${SRC_QT}/mainwindow.cpp
+        ${SRC_QT}/viewerwindow.cpp
+        ${SRC_QT}/window_manager.cpp
+        ${SRC_QT}/qt_graphics_wrapper.cpp
+        ${SRC_QT}/qt_input_items.cpp
+
+        ${SRC_QT}/mainwindow.ui
+        ${SRC_QT}/viewerwindow.ui
+
+        ${INCLUDE_QT}/mainwindow.h
+        ${INCLUDE_QT}/viewerwindow.h
+        ${INCLUDE_QT}/window_manager.h
+        ${INCLUDE_QT}/qt_graphics_wrapper.h
+        ${INCLUDE_QT}/qt_input_items.h
+        ${INCLUDE_COMMON}/graphics_wrapper.h
+        ${INCLUDE_COMMON}/input_viewer.h
+        ${SRC_COMMON}/input_viewer.cpp
+        ${INCLUDE_COMMON}/input_items.h
+        ${INCLUDE_COMMON}/viewer.h
+        ${INCLUDE_COMMON}/viewers/n64_viewer.h
+        ${SRC_COMMON}/viewers/n64_viewer.cpp
+        ${INCLUDE_COMMON}/com_ports.h
+        ${SRC_COMMON}/com_ports.cpp
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(SlaskSpy
         MANUAL_FINALIZATION
-        ${PROJECT_SOURCES}
-
-
+        ${QT_PROJECT_SOURCES}
     )
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET SlaskSpy APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
@@ -47,18 +57,18 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
 else()
     if(ANDROID)
         add_library(SlaskSpy SHARED
-            ${PROJECT_SOURCES}
+            ${QT_PROJECT_SOURCES}
         )
 # Define properties for Android with Qt 5 after find_package() calls as:
 #    set(ANDROID_PACKAGE_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/android")
     else()
         add_executable(SlaskSpy
-            ${PROJECT_SOURCES}
+            ${QT_PROJECT_SOURCES}
         )
     endif()
 endif()
 
-target_include_directories(SlaskSpy PRIVATE include viewers)
+target_include_directories(SlaskSpy PRIVATE ${INCLUDE_QT} ${INCLUDE_COMMON})
 target_link_libraries(SlaskSpy PRIVATE Qt${QT_VERSION_MAJOR}::Widgets Setupapi)
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.

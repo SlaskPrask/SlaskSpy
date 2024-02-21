@@ -1,8 +1,10 @@
-#include "n64/n64_viewer.h"
+#include "viewers/n64_viewer.h"
 
 #include <cstdint>
 #include <iostream>
 #include <string_view>
+
+#include "input_items.h"
 
 std::unordered_map<std::string_view, int32_t> const N64Viewer::kMapping{
     {"a", 0},

@@ -5,7 +5,7 @@
 #include <functional>
 #include <QMainWindow>
 
-#include "inputviewer.h"
+#include "input_viewer.h"
 
 namespace Ui {
 class ViewerWindow;
@@ -19,13 +19,13 @@ public:
     ViewerWindow(QWidget *parent = nullptr, std::function<void()> close_callback = {}, int32_t com_index = 0);
     ~ViewerWindow();
 
-    bool Valid();
+    bool Valid() const;
 
 private:
-    void closeEvent(QCloseEvent *bar);
+    void closeEvent(QCloseEvent *event);
     Ui::ViewerWindow *ui;
     std::function<void()> close_callback_;
-    std::unique_ptr<InputViewer> input_viewer_;
+    InputViewer* input_viewer_;
 };
 
 #endif // VIEWERWINDOW_H

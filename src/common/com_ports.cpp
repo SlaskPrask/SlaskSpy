@@ -10,20 +10,20 @@
 #include <devguid.h>
 #include <setupapi.h>
 
-#include <QString>
-#include <QTimer>
-
 namespace com_ports {
 
-COMDevice::COMDevice(int32_t com_index, int32_t baud_rate, Viewer* viewer, QGraphicsView* graphics_view) :
+COMDevice::COMDevice(int32_t com_index,
+                     int32_t baud_rate,
+                     size_t read_buffer_size,
+                     std::function<void(char*)> const& set_data_callback,
+                     std::function<void()> const& graphics_update_callback) :
     handle_{nullptr},
-    dispatch_{nullptr},
     com_index_{com_index},
     baud_rate_{baud_rate},
-    kBufferSize{viewer->GetDataBytesSize()},
+    kBufferSize{read_buffer_size},
     read_buffer_{new char[kBufferSize]},
-    viewer_{viewer},
-    graphics_view_{graphics_view}
+    set_data_callback_{set_data_callback},
+    graphics_update_callback_{graphics_update_callback}
 {
     TryReconnecting();
 }
@@ -32,34 +32,24 @@ bool COMDevice::Valid() {
     return handle_ != INVALID_HANDLE_VALUE;
 }
 
-void COMDevice::StartReading() {
-    dispatch_ = new QTimer(this);
-    connect(dispatch_, &QTimer::timeout, this, [this](){Tick();});
-    dispatch_->start();
-}
-
 COMDevice::~COMDevice() {
     if (handle_ != INVALID_HANDLE_VALUE) {
         CloseHandle(handle_);
     }
-    if (dispatch_ != nullptr) {
-        dispatch_->stop();
-        delete dispatch_;
-    }
+
     if (read_buffer_ != nullptr) {
         delete[] read_buffer_;
     }
 }
 
 void COMDevice::Tick() {
-    char read_buffer[33];
 
     try {
         DWORD bytes_read = 0;
 
         if (!ReadFile(handle_,
-                 &read_buffer,
-                 sizeof(read_buffer),
+                 read_buffer_,
+                 kBufferSize,
                  &bytes_read,
                       nullptr)) {
             std::cout  << "Error Reading" << std::endl;
@@ -75,12 +65,12 @@ void COMDevice::Tick() {
         return;
     }
 
-    if (read_buffer[32] != 0x0A) {
+    if (read_buffer_[kBufferSize - 1] != 0x0A) {
         return;
     }
 
-    viewer_->SetIncommingData(read_buffer);
-    graphics_view_->update();
+    set_data_callback_(read_buffer_);
+    graphics_update_callback_();
 }
 
 bool COMDevice::TryReconnecting() {
@@ -133,7 +123,7 @@ std::vector<ComPortData> FetchCOMPorts() {
         if (result != 0) {
             ComPortData const new_port{
                 i,
-                QString::fromStdString(GetFriendlyName(index))
+                GetFriendlyName(index)
             };
             port_list.push_back(new_port);
             ++index;
@@ -154,7 +144,6 @@ std::string GetFriendlyName(int32_t device) {
     if (h_device_info == INVALID_HANDLE_VALUE) {
         return res;
     }
-
 
     SP_DEVINFO_DATA dev_info_data{};
     dev_info_data.cbSize = sizeof(dev_info_data);

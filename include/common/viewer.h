@@ -14,8 +14,7 @@ class Viewer {
     virtual size_t GetDataBytesSize() = 0;
     virtual bool AssignButton(std::string_view name, InputButton* button_item) = 0;
     virtual bool AssignStick(std::string_view x_name, std::string_view y_name, InputStick* stick_item) = 0;
-  protected:
-
+    virtual ~Viewer() = default;
 };
 
 #endif // VIEWER_H

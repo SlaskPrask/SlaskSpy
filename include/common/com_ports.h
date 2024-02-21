@@ -7,47 +7,42 @@
 #include <string>
 #include <windows.h>
 
-#include "viewer.h"
-
-#include <QGraphicsView>
-#include <QObject>
-#include <QString>
-#include <QTimer>
-
 namespace com_ports {
 constexpr int32_t kMaxPort{255};
 
 struct ComPortData {
     int32_t index;
-    QString friendly_name;
+    std::string friendly_name;
 };
 
 std::vector<ComPortData> FetchCOMPorts();
 std::string GetFriendlyName(int32_t device);
 
-class COMDevice : public QObject
+class COMDevice
 {
 public:
-    COMDevice(int32_t com_index, int32_t baud_rate, Viewer* viewer, QGraphicsView* graphics_view);
+    COMDevice(
+        int32_t com_index,
+        int32_t baud_rate,
+        size_t read_buffer_size,
+        std::function<void(char*)> const& set_data_callback,
+        std::function<void()> const& graphics_update_callback);
     ~COMDevice();
 
-    void StartReading();
     bool Valid();
+    void Tick();
 
 private:
-
-    void Tick();
     bool TryReconnecting();
 
     HANDLE handle_;
-    QTimer* dispatch_;
     int32_t com_index_;
     int32_t baud_rate_;
 
     size_t const kBufferSize;
     char* read_buffer_;
-    Viewer* viewer_;
-    QGraphicsView* graphics_view_;
+    std::function<void(char*)> set_data_callback_;
+    std::function<void()> graphics_update_callback_;
 };
 
 }

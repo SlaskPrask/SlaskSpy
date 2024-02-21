@@ -2,9 +2,11 @@
 #include "ui_viewerwindow.h"
 
 #include <cstdint>
+#include <iostream>
 #include <functional>
 #include <QCloseEvent>
 
+#include "qt_graphics_wrapper.h"
 #include "viewer.h"
 
 ViewerWindow::ViewerWindow(QWidget *parent, std::function<void()> close_callback, int32_t com_index)
@@ -14,10 +16,18 @@ ViewerWindow::ViewerWindow(QWidget *parent, std::function<void()> close_callback
     , input_viewer_{nullptr}
 {
     ui->setupUi(this);
-    input_viewer_ = std::make_unique<InputViewer>(ui->graphicsView, [this](int32_t width, int32_t height){setFixedSize(width, height);}, com_index, ViewerType::kN64);
+    input_viewer_ = new InputViewer(
+        new QTGraphicsWrapper(ui->graphicsView),
+        com_index,
+        ViewerType::kN64
+    );
+
+    if (input_viewer_->Valid()) {
+        setFixedSize(input_viewer_->GetWindowWidth(), input_viewer_->GetWindowHeight());
+    }
 }
 
-bool ViewerWindow::Valid() {
+bool ViewerWindow::Valid() const {
     return input_viewer_->Valid();
 }
 
@@ -28,5 +38,6 @@ ViewerWindow::~ViewerWindow()
 
 void ViewerWindow::closeEvent(QCloseEvent *event) {
     event->ignore();
+    delete input_viewer_;
     close_callback_();
 }

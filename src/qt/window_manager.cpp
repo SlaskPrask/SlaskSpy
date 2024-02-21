@@ -1,15 +1,12 @@
-#include "../include/window_manager.h"
+#include "window_manager.h"
 
 #include <cstdint>
 
 #include "mainwindow.h"
 #include "viewerwindow.h"
 
-WindowManager::WindowManager() {
-    main_window_ = std::make_unique<MainWindow>(nullptr, [this](int32_t com_index){OpenViewer(com_index);});
-    main_window_->setWindowFlags(
-        main_window_->windowFlags() &(~Qt::WindowMaximizeButtonHint));
-    main_window_->show();
+WindowManager::WindowManager() : main_window_{nullptr}, viewer_window_{nullptr} {
+    OpenMain();
 }
 
 void WindowManager::OpenViewer(int32_t com_index) {
@@ -32,6 +29,8 @@ void WindowManager::OpenMain() {
         main_window_->windowFlags() &(~Qt::WindowMaximizeButtonHint));
     main_window_->show();
 
-    viewer_window_->close();
-    viewer_window_ = nullptr;
+    if (viewer_window_ != nullptr) {
+        viewer_window_->close();
+        viewer_window_ = nullptr;
+    }
 }
