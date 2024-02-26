@@ -9,11 +9,13 @@ QtInputStick::QtInputStick(QPixmap const& pixmap,
                            int32_t range_y,
                            float x_divisor,
                            float y_divisor) :
-    InputStick(origin_x, origin_y, range_x, range_y, x_divisor, y_divisor),
-    QGraphicsPixmapItem(pixmap)
+    InputStick(range_x, range_y, x_divisor, y_divisor),
+    QGraphicsPixmapItem(pixmap),
+    kOriginX{origin_x},
+    kOriginY{origin_y}
 {
-    setX(kOriginX);
-    setY(kOriginY);
+    setX(origin_x);
+    setY(origin_y);
 }
 
 void QtInputStick::Update(char x, char y) {

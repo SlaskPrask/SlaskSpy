@@ -35,8 +35,8 @@ set(QT_PROJECT_SOURCES
         ${INCLUDE_QT}/qt_graphics_wrapper.h
         ${INCLUDE_QT}/qt_input_items.h
         ${INCLUDE_COMMON}/graphics_wrapper.h
-        ${INCLUDE_COMMON}/input_viewer.h
-        ${SRC_COMMON}/input_viewer.cpp
+        ${INCLUDE_COMMON}/skin_settings.h
+        ${SRC_COMMON}/skin_settings.cpp
         ${INCLUDE_COMMON}/input_items.h
         ${INCLUDE_COMMON}/viewer.h
         ${INCLUDE_COMMON}/viewers/n64_viewer.h

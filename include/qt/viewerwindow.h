@@ -4,8 +4,9 @@
 #include <cstdint>
 #include <functional>
 #include <QMainWindow>
+#include <string_view>
 
-#include "input_viewer.h"
+#include "qt_graphics_wrapper.h"
 
 namespace Ui {
 class ViewerWindow;
@@ -16,7 +17,7 @@ class ViewerWindow : public QMainWindow
     Q_OBJECT
 
 public:
-    ViewerWindow(QWidget *parent = nullptr, std::function<void()> close_callback = {}, int32_t com_index = 0);
+    ViewerWindow(QWidget *parent = nullptr, std::function<void()> close_callback = {}, std::string_view skin_directory, int32_t com_index = 0);
     ~ViewerWindow();
 
     bool Valid() const;
@@ -25,7 +26,8 @@ private:
     void closeEvent(QCloseEvent *event);
     Ui::ViewerWindow *ui;
     std::function<void()> close_callback_;
-    InputViewer* input_viewer_;
+    QTGraphicsWrapper* graphics_wrapper_;
+
 };
 
 #endif // VIEWERWINDOW_H

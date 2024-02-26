@@ -11,6 +11,7 @@
 #include <QXmlStreamAttributes>
 
 #include "qt_input_items.h"
+#include "skin_settings.h"
 #include "viewer.h"
 
 class QTGraphicsWrapper : public GraphicsWrapper, public QObject {
@@ -19,7 +20,7 @@ public:
     ~QTGraphicsWrapper();
     void StartDispatchThread(std::function<void()> const& tick_callback) override;
     void Update() override;
-    bool SetupScene(std::string_view skin_directory, Viewer* viewer) override;
+    bool SetupScene(slask_spy::SkinSettings const* settings, Viewer* viewer) override;
     int32_t GetHeight() const override;
     int32_t GetWidth() const override;
 

@@ -49,7 +49,7 @@ void COMDevice::Tick() {
 
         if (!ReadFile(handle_,
                  read_buffer_,
-                 kBufferSize,
+                 static_cast<DWORD>(kBufferSize),
                  &bytes_read,
                       nullptr)) {
             std::cout  << "Error Reading" << std::endl;
@@ -152,28 +152,26 @@ std::string GetFriendlyName(int32_t device) {
     DWORD req_size{0};
     SetupDiGetDeviceRegistryProperty(h_device_info, &dev_info_data, SPDRP_HARDWAREID, nullptr, nullptr, 0, &req_size);
 
-    BYTE* hardware_id{new BYTE[(req_size > 1) ? req_size : 1]};
+    auto hardware_id{ std::make_unique<BYTE[]>((req_size > 1) ? req_size : 1) };
+
     DWORD reg_data_type{0};
-    if (SetupDiGetDeviceRegistryProperty(h_device_info, &dev_info_data, SPDRP_HARDWAREID, &reg_data_type, hardware_id, sizeof(hardware_id) * req_size, nullptr)) {
+    if (SetupDiGetDeviceRegistryProperty(h_device_info, &dev_info_data, SPDRP_HARDWAREID, &reg_data_type, hardware_id.get(), sizeof(hardware_id) * req_size, nullptr)) {
         req_size = 0;
         SetupDiGetDeviceRegistryProperty(h_device_info, &dev_info_data, SPDRP_FRIENDLYNAME, nullptr, nullptr, 0, &req_size);
 
-        BYTE* friendly_name = new BYTE[(req_size > 1) ? req_size : 1];
-        if (!SetupDiGetDeviceRegistryProperty(h_device_info, &dev_info_data, SPDRP_FRIENDLYNAME, nullptr, friendly_name, sizeof(friendly_name) * req_size, nullptr))
+        auto friendly_name{std::make_unique<BYTE[]>((req_size > 1) ? req_size : 1)};
+        if (!SetupDiGetDeviceRegistryProperty(h_device_info, &dev_info_data, SPDRP_FRIENDLYNAME, nullptr, friendly_name.get(), sizeof(friendly_name) * req_size, nullptr))
         {
             // device does not have this property set
 
-            memset(friendly_name, 0, req_size > 1 ? req_size : 1);
+            memset(friendly_name.get(), 0, req_size > 1 ? req_size : 1);
         }
-        wchar_t* str = new wchar_t[req_size / 2 + 1];
-        memcpy(str, friendly_name, req_size);
-        std::wstring ws{str};
-        res = std::string(ws.begin(), ws.end());
 
-        delete[] str;
-        delete[] friendly_name;
+        for (size_t i{0}; i < req_size; i += 2)
+        {
+            res += static_cast<char>(friendly_name[i]);
+        }
     }
-    delete[] hardware_id;
     return res;
 }
 }

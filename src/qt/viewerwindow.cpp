@@ -7,15 +7,22 @@
 #include <QCloseEvent>
 
 #include "qt_graphics_wrapper.h"
+#include "skin_settings.h"
 #include "viewer.h"
 
-ViewerWindow::ViewerWindow(QWidget *parent, std::function<void()> close_callback, int32_t com_index)
+using slask_spy::SkinSettings;
+
+ViewerWindow::ViewerWindow(QWidget *parent, std::function<void()> close_callback, std::string_view skin_directory, int32_t com_index)
     : QMainWindow(parent)
     , ui(new Ui::ViewerWindow)
     , close_callback_{close_callback}
-    , input_viewer_{nullptr}
+    , graphics_wrapper_{nullptr}
 {
     ui->setupUi(this);
+    SkinSettings const* settings = SkinSettings::LoadSkinSettings(skin_directory);
+    graphics_wrapper_ = new QTGraphicsWrapper(ui->graphicsView);
+    graphics_wrapper_->SetupScene(settings, viewer);
+
     input_viewer_ = new InputViewer(
         new QTGraphicsWrapper(ui->graphicsView),
         com_index,
@@ -38,6 +45,5 @@ ViewerWindow::~ViewerWindow()
 
 void ViewerWindow::closeEvent(QCloseEvent *event) {
     event->ignore();
-    delete input_viewer_;
     close_callback_();
 }
