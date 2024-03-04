@@ -1,6 +1,6 @@
 Platform Support:
-Windows x64
+* Windows x64
 
 Controller Support:
-Nintendo 64
-Game Cube
+* Nintendo 64
+* Game Cube
