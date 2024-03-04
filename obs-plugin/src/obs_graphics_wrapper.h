@@ -24,33 +24,36 @@ class GraphicsObject {
 public:
 
 	struct DrawParams {
-		uint32_t x;
-		uint32_t y;
 		uint32_t width;
 		uint32_t height;
 	};
 
-	GraphicsObject(CommonSetting const* common, gs_image_file4_t const* image)
+	GraphicsObject(CommonSetting const* common, gs_image_file4_t const* image, bool flipX = false, bool flipY = false)
 		: kTranslation
-		{
-					static_cast<float>(common->x),
-				    static_cast<float>(common->y), 
+		{static_cast<float>(
+				       common->x +
+				       (flipX ? image->image3.image2.image.cx
+					      : 0)),
+			       static_cast<float>(common->y) + (flipY ? image->image3.image2.image.cy : 0), 
 					0.0f
 		},
-		kScaling{
-			static_cast<float>(common->width) /
+		kScaling{(flipX ? -1 : 1) * static_cast<float>(common->width) /
 				image->image3.image2.image.cx,
-			static_cast<float>(common->height) /
+			   (flipY ? -1 : 1) *
+				   static_cast<float>(common->height) /
 				image->image3.image2.image.cy,
 			1.0f
 		},
-		  kDrawRegion{0, 0, image->image3.image2.image.cx,
+		kDrawRegion{image->image3.image2.image.cx,
 			      image->image3.image2.image.cy}
 		{
 		
 	}
 
 	virtual ~GraphicsObject() {}
+
+	virtual uint32_t GetFlip() const { return 0;
+	}
 
 	virtual vec3 const* GetTranslation() const { 
 		return &kTranslation;
@@ -78,62 +81,46 @@ public:
 	OBSInputAnalog(AnalogSetting const *settings,
 		       gs_image_file4_t const *image)
 		: InputAnalog(settings),
-		  GraphicsObject(settings, image),
+		  GraphicsObject(settings, image, 
+			  settings->direction == AnalogDirection::kLeft,
+			  settings->direction == AnalogDirection::kUp),
 		  draw_params_{kDrawRegion},
 		  direction_{settings->direction},
-		  reversed_{settings->reverse}
+		  reversed_{settings->reverse},
+		  flip_{static_cast<uint32_t>((settings->direction == AnalogDirection::kLeft
+				 ? GS_FLIP_U
+				 : 0) |
+			(settings->direction == AnalogDirection::kUp ? GS_FLIP_V
+								     : 0))}
 	{}
 
 	~OBSInputAnalog() = default;
 
 	void Update(uint8_t analog) override{
-		float percentage = analog / 255.f;
+		const float percentage = analog / 255.f;
 
 		if (!reversed_) {
 			switch (direction_) {
 				case AnalogDirection::kLeft:
-					draw_params_.x =
-						static_cast<uint32_t>(kDrawRegion.width -
-						(kDrawRegion.width * percentage));
-					break;
 				case AnalogDirection::kRight:
-					draw_params_.width =
-						static_cast<uint32_t>(kDrawRegion.width * percentage);
+					draw_params_.width = static_cast<uint32_t>(
+						kDrawRegion.width * percentage);
 					break;
 				case AnalogDirection::kDown:
-					draw_params_.height =
-						static_cast<uint32_t>(kDrawRegion.height * percentage);
-					break;
 				case AnalogDirection::kUp:
-					draw_params_.y =
-						static_cast<uint32_t>(kDrawRegion.height -
-						(kDrawRegion.height * percentage));
+					draw_params_.height =
+						static_cast<uint32_t>(
+							kDrawRegion.height *
+							percentage);
 					break;
 			} 
 		} else {
-			switch (direction_) {
-				case AnalogDirection::kLeft:
-					draw_params_.width =
-						static_cast<uint32_t>(kDrawRegion.width -
-						(kDrawRegion.width * percentage));
-					break;
-				case AnalogDirection::kRight:
-					draw_params_.x =
-						static_cast<uint32_t>(kDrawRegion.width * percentage);
-					break;
-				case AnalogDirection::kDown:
-					draw_params_.y =
-						static_cast<uint32_t>(kDrawRegion.height * percentage);
-					break;
-				case AnalogDirection::kUp:
-					draw_params_.height =
-						static_cast<uint32_t>(kDrawRegion.height -
-						(kDrawRegion.height * percentage));
-					break;
-			} 
+			// TODO (Implement Reversed)
 		}
+	}
 
-
+	uint32_t GetFlip() const override { 
+		return flip_;
 	}
 
 	DrawParams const* GetDrawRegion() const override {
@@ -144,7 +131,7 @@ private:
 	DrawParams draw_params_;
 	AnalogDirection const direction_;
 	const bool reversed_;
-
+	const uint32_t flip_;
 };
 
 class OBSInputStick : public InputStick, public GraphicsObject {
