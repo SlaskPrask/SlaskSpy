@@ -1,20 +1,40 @@
 #ifndef VIEWER_H
 #define VIEWER_H
 
+#include <cstdint>
 #include <string_view>
+#include <unordered_map>
+
 #include "input_items.h"
 
-enum class ViewerType {
-    kN64 = 0
-};
+namespace slask_spy {
+    enum class ViewerType {
+        kNull = 0,
+        kN64,
+        kGC
+    };
 
-class Viewer {
-  public:
-    virtual void SetIncommingData(char* data) = 0;
-    virtual size_t GetDataBytesSize() = 0;
-    virtual bool AssignButton(std::string_view name, InputButton* button_item) = 0;
-    virtual bool AssignStick(std::string_view x_name, std::string_view y_name, InputStick* stick_item) = 0;
-    virtual ~Viewer() = default;
-};
+    class Viewer {
+    public:
+        static Viewer* CreateViewer(ViewerType type);
+        static std::string StringFromType(ViewerType type);
+        static ViewerType TypeFromString(std::string_view type_string);
+        static int32_t GetMappingIndex(std::string_view name, ViewerType type);
+
+        virtual size_t GetDataBytesSize() const = 0;
+        
+        void SetIncommingData(char* data);
+        void AssignButton(InputButton* button_item);
+        void AssignStick(InputStick* stick_item);
+        void AssignAnalog(InputAnalog* stick_item);
+        virtual ~Viewer() = default;
+
+    protected:
+        std::vector<InputButton*> assigned_buttons_{};
+        std::vector<InputStick*> assigned_sticks_{};
+        std::vector<InputAnalog*> assigned_analogs_{};
+
+    };
+} // namespace slask_spy
 
 #endif // VIEWER_H

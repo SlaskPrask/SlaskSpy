@@ -4,29 +4,44 @@
 #include <cstdint>
 #include <string_view>
 #include <unordered_map>
-#include <vector>
 
-#include "input_items.h"
 #include "viewer.h"
+namespace slask_spy {
+    class N64Viewer : public Viewer
+    {
+    public:
+        N64Viewer() = default;
 
-class N64Viewer : public Viewer
-{
-public:
-    N64Viewer();
+        size_t GetDataBytesSize() const override {
+            return kDataBytes;
+        }
 
-    void SetIncommingData(char* data) override;
-    size_t GetDataBytesSize() override;
-    bool AssignButton(std::string_view name, InputButton* button_item) override;
-    bool AssignStick(std::string_view x_name, std::string_view y_name, InputStick* stick_item) override;
-private: 
-    static std::unordered_map<std::string_view, int32_t> const kMapping;
+        static std::unordered_map<std::string_view, int32_t> const& GetMapping()
+        {
+            static std::unordered_map<std::string_view, int32_t> const kMapping{
+                {"a", 0},
+                {"b", 1},
+                {"z", 2},
+                {"start", 3},
+                {"up", 4},
+                {"down", 5},
+                {"left", 6},
+                {"right", 7},
+                {"l", 10},
+                {"r", 11},
+                {"cup", 12},
+                {"cdown", 13},
+                {"cleft", 14},
+                {"cright", 15},
 
-    std::vector<int32_t> assigned_buttons_;
-    std::unordered_map<int32_t, InputButton*> buttons_;
-
-    int32_t stick_x_;
-    int32_t stick_y_;
-    InputStick* stick_;
-};
+                {"stick_x", 16},
+                {"stick_y", 24}
+            };
+            return kMapping;
+        }
+    private:
+        static constexpr size_t kDataBytes{ 33 };
+    };
+} // namespace slask_spy
 
 #endif // N64_VIEWER_H

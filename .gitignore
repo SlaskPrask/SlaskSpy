@@ -35,7 +35,7 @@ Thumbs.db
 /.qmake.cache
 /.qmake.stash
 build-*
-InputSkins/Tron-Style*
+InputSkins/*
 
 # qtcreator generated files
 *.pro.user*

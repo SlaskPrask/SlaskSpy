@@ -1,14 +1,16 @@
 #include "com_ports.h"
 
 #include <cstdint>
-#include <iostream>
 #include <vector>
 #include <windows.h>
 #include <string>
+#include <thread>
 
 #include <initguid.h>
 #include <devguid.h>
 #include <setupapi.h>
+
+#include "logger.h"
 
 namespace com_ports {
 
@@ -46,22 +48,26 @@ void COMDevice::Tick() {
 
     try {
         DWORD bytes_read = 0;
-
         if (!ReadFile(handle_,
                  read_buffer_,
                  static_cast<DWORD>(kBufferSize),
                  &bytes_read,
                       nullptr)) {
-            std::cout  << "Error Reading" << std::endl;
-            TryReconnecting();
+
+            Logger::Error("com_ports: Error reading, trying to reconnect");
+            if (!TryReconnecting()) {
+                constexpr int32_t kRetyLengthMilli{ 500 };
+                Logger::Error("com_ports: Failed to reconnect, trying again in %i", kRetyLengthMilli);
+                std::this_thread::sleep_for(std::chrono::milliseconds{ kRetyLengthMilli });
+                return;
+            }
         }
 
         if (bytes_read < 1) {
-            std::cout << "Nothing Read" << std::endl;
             return;
         }
     } catch (std::exception &e) {
-        std::cerr << e.what() << std::endl;
+        Logger::Error("com_ports: %s", e.what());
         return;
     }
 
@@ -87,7 +93,7 @@ bool COMDevice::TryReconnecting() {
                     0, nullptr);
 
     if (handle_ == INVALID_HANDLE_VALUE) {
-        std::cerr << "Invalid Handle" << std::endl;
+        Logger::Error("com_ports: Invalid handle value when trying to connect to com port %i", com_index_);
         return false;
     }
 
@@ -95,16 +101,26 @@ bool COMDevice::TryReconnecting() {
     serial_params.DCBlength = sizeof(serial_params);
     if (!GetCommState(handle_, &serial_params)){
         handle_ = INVALID_HANDLE_VALUE;
-        std::cerr << "Failed getting params" << std::endl;
+        Logger::Error("com_ports: Failed getting parameters for com port %i", com_index_);
         return false;
     }
     serial_params.BaudRate = baud_rate_;
     serial_params.ByteSize = 8;
     serial_params.StopBits = TWOSTOPBITS;
     serial_params.Parity = NOPARITY;
+    
+    COMMTIMEOUTS cto{};
+    GetCommTimeouts(handle_, &cto);
+    cto.ReadIntervalTimeout = 10;
+    cto.ReadTotalTimeoutConstant = 10;
+    cto.ReadTotalTimeoutMultiplier = 10;
+    cto.WriteTotalTimeoutConstant = 10;
+    cto.WriteTotalTimeoutMultiplier = 10;
+    SetCommTimeouts(handle_, &cto);
+
     if (!SetCommState(handle_, &serial_params)) {
         handle_ = INVALID_HANDLE_VALUE;
-        std::cerr << "Failed setting params" << std::endl;
+        Logger::Error("com_ports: Failed setting parameters for com port %i", com_index_);
         return false;
     }
 
