@@ -1,0 +1,2 @@
+- Go to `C:\Program Files\obs-studio\obs-plugins\64bit` and paste the .dll file in it. Adapt this path if you installed in a different directory or use the 32 bits version of OBS.
+- Open OBS and add a new source, you should see SlaskSpy in the list.
