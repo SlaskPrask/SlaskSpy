@@ -66,9 +66,10 @@ void OBSGraphicsWrapper::Render(gs_effect_t* effect) {
 			gs_matrix_push();
 			gs_matrix_translate(obj->GetTranslation());
 			gs_matrix_scale(obj->GetScaling());
-			gs_draw_sprite_subregion(texture, 0, 
-				draw_region->x,
-				draw_region->y,
+			gs_draw_sprite_subregion(texture, 
+				obj->GetFlip(), 
+				0,
+				0,
 				draw_region->width, 
 				draw_region->height
 			);
