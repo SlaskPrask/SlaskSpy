@@ -6,5 +6,6 @@ Controller Support:
 * Game Cube
 
 # Usage
-Drag and drop the .dll file into you OBS plugins folder (usually C:\Program Files\obs-studio\obs-plugins\64bit).
-Set the Skin Directory to a parent folder that contains your desired skins, currently supports most NintendoSpy, RetroSpy and EmSpy skins for the controllers that are currently supported.
+- Go to `C:\Program Files\obs-studio\obs-plugins\64bit` and paste the .dll file in it. [Follow this guide](https://obsproject.com/kb/plugins-guide) for more informations.
+- Open OBS and add a new source, you should see SlaskSpy in the list.
+- Set the Skin Directory to a parent folder that contains your desired skins, currently supports most NintendoSpy, RetroSpy and EmSpy skins for the controllers that are currently supported.
