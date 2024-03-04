@@ -1,6 +1,18 @@
 # This file is used to ignore files which are generated
 # ----------------------------------------------------------------------------
 
+# Exclude lock files
+*.lock.json
+
+# Exclude macOS legacy resource forks
+.DS_Store
+
+# Exclude CMake build number cache
+/cmake/.CMakeBuildNumber
+
+*/build*
+*.deps
+*.vs
 *~
 *.autosave
 *.a
