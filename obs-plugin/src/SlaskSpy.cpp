@@ -177,13 +177,38 @@ void SlaskSpy::TickSpy() {
 	}
 }
  
+void SlaskSpy::Reset() {
+	if (tick_thread_ != nullptr) {
+		run_ = false;
+		tick_thread_->join();
+		tick_thread_ = nullptr;
+	}
+
+	if (skin_settings_ != nullptr)
+	{
+		delete skin_settings_;
+		skin_settings_ = nullptr;
+	}
+
+	if (viewer_ != nullptr) {
+		delete viewer_;
+		viewer_ = nullptr;
+	}
+
+	if (device_ != nullptr) {
+		delete device_;
+		device_ = nullptr;
+	}
+
+	if (graphics_ != nullptr) {
+		delete graphics_;
+		graphics_ = nullptr;
+	}
+}
+
 void SlaskSpy::UpdateSpy(void* data, obs_data_t* settings) {
 	SlaskSpy *spy{static_cast<SlaskSpy *>(data)};
-	
-	if (spy->tick_thread_ != nullptr) {
-		spy->run_ = false;
-		spy->tick_thread_->join();
-	}
+	spy->Reset();
 
 	spy->com_port_ = static_cast<int32_t>(obs_data_get_int(settings, kComPortName));
 	spy->skin_path_ = obs_data_get_string(settings, kSkinSelect);
@@ -195,37 +220,20 @@ void SlaskSpy::UpdateSpy(void* data, obs_data_t* settings) {
 		return;
 	}
 
-	if (spy->skin_settings_ != nullptr) {
-		delete spy->skin_settings_;
-	}
-
 	spy->skin_settings_ =
 		slask_spy::SkinSettings::LoadSkinSettings(spy->skin_path_, type);
 	
 	if (spy->skin_settings_ == nullptr) {
-		obs_log(LOG_INFO, "skin failed to load at path: %s", spy->skin_path_.c_str());
+		obs_log(LOG_INFO, "SlaskSpy: Skin failed to load at path: %s", spy->skin_path_.c_str());
 		return;
 	}
 
-	if (spy->viewer_ != nullptr) {
-		delete spy->viewer_;
-	}
-
 	spy->viewer_ = slask_spy::Viewer::CreateViewer(type);
-
-	if (spy->device_ != nullptr) {
-		delete spy->device_;
-	}
-
 	spy->device_ = new com_ports::COMDevice(
 		spy->com_port_, kBaudRate, spy->viewer_->GetDataBytesSize(),
 		[spy](char *data) { spy->viewer_->SetIncommingData(data); },
 		[](){});
-		
-	if (spy->graphics_ != nullptr) {
-		delete spy->graphics_;
-	}
-	
+			
 	spy->graphics_ = new slask_spy::OBSGraphicsWrapper();
 	spy->graphics_->SetupScene(spy->skin_settings_, spy->viewer_);
 	spy->tick_thread_ =
@@ -253,14 +261,13 @@ void* SlaskSpy::CreateSpy(obs_data_t* settings, obs_source* source) {
 
 void SlaskSpy::DestroySpy(void* data) {
 	SlaskSpy *spy{static_cast<SlaskSpy *>(data)};
-	
-	
 	delete spy;
 }
 
 uint32_t SlaskSpy::GetSpyWidth(void* data) {
 	SlaskSpy *spy{static_cast<SlaskSpy *>(data)};
 	if (spy->graphics_ == nullptr) {
+		Logger::Info("Returning 1");
 		return 1;
 	}
 	return spy->graphics_->GetWidth();
@@ -289,23 +296,5 @@ SlaskSpy::SlaskSpy(obs_source_t *source) :
 }
 
 SlaskSpy::~SlaskSpy() {
-	if (tick_thread_ != nullptr) {
-		run_ = false;
-		tick_thread_->join();
-	}
-	if (skin_settings_ != nullptr) {
-		delete skin_settings_;
-	}
-
-	if (graphics_ != nullptr) {
-		delete graphics_;
-	}
-
-	if (viewer_ != nullptr) {
-		delete viewer_;
-	}
-
-	if (device_ != nullptr) {
-		delete device_;
-	}
+	Reset();
 }

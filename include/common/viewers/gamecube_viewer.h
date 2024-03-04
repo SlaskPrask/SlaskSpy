@@ -43,7 +43,7 @@ namespace slask_spy {
         }
 
     private:
-        static constexpr size_t kDataBytes{ 33 };
+        static constexpr size_t kDataBytes{ 65 };
 
     };
 } // namespace slask_spy

@@ -72,7 +72,7 @@ namespace slask_spy {
 		bool CreateAnalogSetting(std::string const& line);
 		static std::string GetAttributeValue(std::string const &line,
 					      std::string const &name);
-		static std::tuple<ViewerType, SkinData> GetSkinData(std::string_view skin_path);
+		static std::tuple<std::vector<ViewerType>, SkinData> GetSkinData(std::string_view skin_path);
 
 
 		bool valid_;

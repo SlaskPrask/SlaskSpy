@@ -39,6 +39,8 @@ public:
 
 private:
 	SlaskSpy(obs_source_t *source);
+	void Reset();
+	
 	obs_source_t *source_;
 
 	int32_t com_port_;

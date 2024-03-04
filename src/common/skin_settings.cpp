@@ -30,24 +30,27 @@ std::unordered_map<ViewerType, std::vector<SkinData>> SkinSettings::FetchSkins(s
 	for (auto& path : std::filesystem::recursive_directory_iterator(skin_dir)) {
 		if (path.is_directory()) {
 			auto const data = GetSkinData(path.path().string());
-			auto const type = std::get<0>(data);
-			if (type != ViewerType::kNull) {
-				auto it = skins.find(type);
-				if (it == skins.end()) {
-					skins[type] = std::vector<SkinData>{};
+			auto const types = std::get<0>(data);
+			
+			for (auto type : types) {
+				if (type != ViewerType::kNull) {
+					auto it = skins.find(type);
+					if (it == skins.end()) {
+						skins[type] = std::vector<SkinData>{};
+					}
+					skins[type].push_back(std::get<1>(data));
 				}
-				skins[type].push_back(std::get<1>(data));
 			}
 		}
 	}
 	return skins;
 }
 
-std::tuple<ViewerType, SkinData> SkinSettings::GetSkinData(std::string_view skin_path) {
+std::tuple<std::vector<ViewerType>, SkinData> SkinSettings::GetSkinData(std::string_view skin_path) {
 	SkinData skin{};
 	skin.path = skin_path;
 	skin.path += "/";
-	ViewerType type{ ViewerType::kNull };
+	std::vector<ViewerType> type{};
 
 	std::string const skin_xml_path{ skin.path + "skin.xml" };
 	std::ifstream xml_file{skin_xml_path};
@@ -69,14 +72,39 @@ std::tuple<ViewerType, SkinData> SkinSettings::GetSkinData(std::string_view skin
 
 			break;
 		}
-		type = Viewer::TypeFromString(GetAttributeValue(line, "type"));
-		if (type != ViewerType::kNull) {
-			skin.author = GetAttributeValue(line, "author");
-			skin.name = GetAttributeValue(line, "name");
+		skin.author = GetAttributeValue(line, "author");
+		skin.name = GetAttributeValue(line, "name");
+
+		std::string type_string{ GetAttributeValue(line, "type") };
+		std::string single_type;
+		ViewerType type_value;
+		size_t pos_start{ 0 };
+		size_t pos_end{ 0 };
+
+		while ((pos_end = type_string.find(';', pos_start)) != std::string::npos) {
+			single_type = type_string.substr(pos_start, pos_end - pos_start);
+			
+			pos_start = pos_end + sizeof(';');
+			type_value = Viewer::TypeFromString(single_type);
+			
+			if (type_value == ViewerType::kNull) {
+				Logger::Warn("skin_settings: Skin type %s is not implemented. Skin: %s", single_type.c_str(), skin_xml_path.c_str());
+			}
+			else {
+				type.push_back(type_value);
+			}
+		}
+
+		single_type = type_string.substr(pos_start);
+		type_value = Viewer::TypeFromString(single_type);
+
+		if (type_value == ViewerType::kNull) {
+			Logger::Warn("skin_settings: Skin type %s is not implemented. Skin: %s", single_type.c_str(), skin_xml_path.c_str());
 		}
 		else {
-			Logger::Warn("skin_settings: Skin type %s is not implemented. Skin: %s", GetAttributeValue(line, "type").c_str(), skin_xml_path.c_str());
+			type.push_back(type_value);
 		}
+
 	}
 	else {
 		Logger::Warn("skin_settings: Could not open file %s", skin_xml_path.c_str());
