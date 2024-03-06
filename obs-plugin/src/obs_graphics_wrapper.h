@@ -24,6 +24,8 @@ class GraphicsObject {
 public:
 
 	struct DrawParams {
+		uint32_t x;
+		uint32_t y;
 		uint32_t width;
 		uint32_t height;
 	};
@@ -32,9 +34,9 @@ public:
 		: kTranslation
 		{static_cast<float>(
 				       common->x +
-				       (flipX ? image->image3.image2.image.cx
+				       (flipX ? common->width
 					      : 0)),
-			       static_cast<float>(common->y) + (flipY ? image->image3.image2.image.cy : 0), 
+			       static_cast<float>(common->y) + (flipY ? common->height : 0), 
 					0.0f
 		},
 		kScaling{(flipX ? -1 : 1) * static_cast<float>(common->width) /
@@ -44,8 +46,9 @@ public:
 				image->image3.image2.image.cy,
 			1.0f
 		},
-		kDrawRegion{image->image3.image2.image.cx,
-			      image->image3.image2.image.cy}
+		kDrawRegion{ 0, 0,
+			image->image3.image2.image.cx,
+		    image->image3.image2.image.cy}
 		{
 		
 	}
@@ -102,12 +105,21 @@ public:
 		if (!reversed_) {
 			switch (direction_) {
 				case AnalogDirection::kLeft:
+				draw_params_.x = kDrawRegion.width -
+						 (static_cast<uint32_t>(
+							 kDrawRegion.width *
+							 percentage));
 				case AnalogDirection::kRight:
 					draw_params_.width = static_cast<uint32_t>(
 						kDrawRegion.width * percentage);
 					break;
-				case AnalogDirection::kDown:
 				case AnalogDirection::kUp:
+					draw_params_.y =
+						kDrawRegion.height -
+						(static_cast<uint32_t>(
+							kDrawRegion.height *
+							percentage));
+				case AnalogDirection::kDown:
 					draw_params_.height =
 						static_cast<uint32_t>(
 							kDrawRegion.height *
@@ -192,8 +204,8 @@ public:
 
 	void StartDispatchThread(std::function<void()> const &tick_callback) override;
 	void Update() override;
-	bool SetupScene(slask_spy::SkinSettings const *settings,
-			Viewer *viewer) override;
+	bool SetupScene(slask_spy::SkinSettings const *settings, Viewer *viewer,
+			std::string const &background) override;
 	int32_t GetWidth() const override;
 	int32_t GetHeight() const override;
 	void Render(gs_effect_t *effect);

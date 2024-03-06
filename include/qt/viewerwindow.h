@@ -13,21 +13,21 @@ class ViewerWindow;
 }
 
 class ViewerWindow : public QMainWindow {
-  Q_OBJECT
+	Q_OBJECT
 
 public:
-  ViewerWindow(QWidget *parent = nullptr,
-               std::function<void()> close_callback = {},
-               std::string_view skin_directory, int32_t com_index = 0);
-  ~ViewerWindow();
+	ViewerWindow(QWidget *parent = nullptr,
+		     std::function<void()> close_callback = {},
+		     std::string_view skin_directory, int32_t com_index = 0);
+	~ViewerWindow();
 
-  bool Valid() const;
+	bool Valid() const;
 
 private:
-  void closeEvent(QCloseEvent *event);
-  Ui::ViewerWindow *ui;
-  std::function<void()> close_callback_;
-  QTGraphicsWrapper *graphics_wrapper_;
+	void closeEvent(QCloseEvent *event);
+	Ui::ViewerWindow *ui;
+	std::function<void()> close_callback_;
+	QTGraphicsWrapper *graphics_wrapper_;
 };
 
 #endif // VIEWERWINDOW_H

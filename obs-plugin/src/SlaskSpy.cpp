@@ -2,6 +2,8 @@
 
 #include <obs-module.h>
 #include <plugin-support.h>
+
+#include <map>
 #include <unordered_map>
 #include <vector>
 
@@ -14,8 +16,9 @@ constexpr const char *kComPortName{"com_port"};
 constexpr const char *kControllerType{"ctrl_type"};
 constexpr const char *kSkinSelect{"skin"};
 constexpr const char *kSkinDirectory{"skin_dir"};
+constexpr const char *kBackgroundSelect{"bg"};
 constexpr uint32_t kBaudRate{115200};
-static std::unordered_map<slask_spy::ViewerType, std::vector<slask_spy::SkinData>> available_skins;
+static std::unordered_map<slask_spy::ViewerType, std::map<std::string, slask_spy::SkinData*>> available_skins;
 }
 
 gs_color_space
@@ -79,7 +82,9 @@ bool SlaskSpy::OnSkinDirectoryChanged(obs_properties_t *properties,
 
 	obs_property_set_enabled(type, true);
 	obs_property_list_clear(type);
-	available_skins = slask_spy::SkinSettings::FetchSkins(skin_dir);
+	if (!slask_spy::SkinSettings::FetchSkins(skin_dir, available_skins)) {
+		return true;
+	}
 	obs_property_list_add_int(type, "None", 0);
 	for (auto const &it : available_skins) {
 		obs_property_list_add_int(
@@ -110,7 +115,10 @@ bool SlaskSpy::OnControllerTypeChanged(obs_properties_t *properties,
 			obs_property_set_enabled(type, false);
 			return true;
 		}
-		available_skins = slask_spy::SkinSettings::FetchSkins(skin_dir);
+		if (!slask_spy::SkinSettings::FetchSkins(skin_dir,
+							 available_skins)) {
+			return true;
+		}
 	}
 
 	auto const &skin_data = available_skins.find(kType);
@@ -119,7 +127,49 @@ bool SlaskSpy::OnControllerTypeChanged(obs_properties_t *properties,
 	}
 
 	for (auto const &it : skin_data->second) {
-		obs_property_list_add_string(skins, it.name.c_str(), it.path.c_str());
+		obs_property_list_add_string(skins, it.second->name.c_str(), it.first.c_str());
+	}
+	return true;
+}
+
+bool SlaskSpy::OnSkinChanged(obs_properties_t *properties, obs_property_t *skin,
+			 obs_data_t *settings)
+{
+	obs_property_t *background{
+		obs_properties_get(properties, kBackgroundSelect)};
+	obs_property_list_clear(background);
+
+	if (available_skins.empty()) {
+		std::string const skin_dir{
+			obs_data_get_string(settings, kSkinDirectory)};
+
+		if (skin_dir.empty()) {
+			obs_property_set_enabled(obs_properties_get(properties,  kControllerType), false);
+			return true;
+		}
+		if (!slask_spy::SkinSettings::FetchSkins(skin_dir,
+							 available_skins)) {
+			return true;
+		}
+	}
+
+	slask_spy::ViewerType const kType{static_cast<slask_spy::ViewerType>(
+		obs_data_get_int(settings, kControllerType))};
+	auto const &skin_data = available_skins.find(kType);
+	if (skin_data == available_skins.end()) {
+		return true;
+	}
+
+	std::string const &skin_name{obs_data_get_string(settings, kSkinSelect)};
+	auto const &specified_skin{skin_data->second.find(skin_name)};
+	
+	if (specified_skin == skin_data->second.end()) {
+		return true;
+	} 
+
+	for (auto const &it : specified_skin->second->backgrounds) {
+		obs_property_list_add_string(background, it.name.c_str(),
+			it.image.c_str());
 	}
 	return true;
 }
@@ -134,7 +184,6 @@ obs_properties_t* SlaskSpy::GetSpyProperties(void* data) {
 		OBS_COMBO_TYPE_LIST, 
 		OBS_COMBO_FORMAT_INT)};
 	
-	// add all names:
 	auto const ports{com_ports::FetchCOMPorts()};
 	for (int32_t i{0}; i < ports.size(); ++i) {
 		obs_property_list_add_int(
@@ -158,13 +207,14 @@ obs_properties_t* SlaskSpy::GetSpyProperties(void* data) {
 	)};
 	obs_property_set_modified_callback(controller_type, OnControllerTypeChanged);
 
-	obs_properties_add_list(
-		properties,
-		kSkinSelect, 
-		"Select skin",
-		OBS_COMBO_TYPE_LIST,
-		OBS_COMBO_FORMAT_STRING
-	);
+	obs_property_t *skin_selection{obs_properties_add_list(
+		properties, kSkinSelect, "Select skin", OBS_COMBO_TYPE_LIST,
+		OBS_COMBO_FORMAT_STRING)};
+	obs_property_set_modified_callback(skin_selection, OnSkinChanged);
+
+	obs_properties_add_list(properties, kBackgroundSelect,
+				"Select background", OBS_COMBO_TYPE_LIST,
+				OBS_COMBO_FORMAT_STRING);
 
 	Logger::Info("properties created");
 
@@ -210,24 +260,31 @@ void SlaskSpy::UpdateSpy(void* data, obs_data_t* settings) {
 	SlaskSpy *spy{static_cast<SlaskSpy *>(data)};
 	spy->Reset();
 
-	spy->com_port_ = static_cast<int32_t>(obs_data_get_int(settings, kComPortName));
-	spy->skin_path_ = obs_data_get_string(settings, kSkinSelect);
-	spy->skin_path_ += "/";
+	// TODO (Slask): Add selectable background
 	slask_spy::ViewerType const type{static_cast<slask_spy::ViewerType>(
 		obs_data_get_int(settings, kControllerType))};
-
 	if (type == slask_spy::ViewerType::kNull) {
+		Logger::Warn("SlaskSpy: Skin type unknown");
 		return;
 	}
 
+	spy->skin_path_ = obs_data_get_string(settings, kSkinSelect);
+	spy->skin_path_ += "/";
 	spy->skin_settings_ =
 		slask_spy::SkinSettings::LoadSkinSettings(spy->skin_path_, type);
 	
 	if (spy->skin_settings_ == nullptr) {
-		obs_log(LOG_INFO, "SlaskSpy: Skin failed to load at path: %s", spy->skin_path_.c_str());
+		Logger::Warn("SlaskSpy: Skin failed to load at path: %s", spy->skin_path_.c_str());
+		return;
+	}
+	spy->background_ = obs_data_get_string(settings, kBackgroundSelect);
+
+	if (spy->background_.empty()) {
+		Logger::Warn("Background empty");
 		return;
 	}
 
+	spy->com_port_ = static_cast<int32_t>(obs_data_get_int(settings, kComPortName));
 	spy->viewer_ = slask_spy::Viewer::CreateViewer(type);
 	spy->device_ = new com_ports::COMDevice(
 		spy->com_port_, kBaudRate, spy->viewer_->GetDataBytesSize(),
@@ -235,7 +292,7 @@ void SlaskSpy::UpdateSpy(void* data, obs_data_t* settings) {
 		[](){});
 			
 	spy->graphics_ = new slask_spy::OBSGraphicsWrapper();
-	spy->graphics_->SetupScene(spy->skin_settings_, spy->viewer_);
+	spy->graphics_->SetupScene(spy->skin_settings_, spy->viewer_, spy->background_);
 	spy->tick_thread_ =
 		new std::thread([spy]() { spy->TickSpy(); });
 }
@@ -267,7 +324,6 @@ void SlaskSpy::DestroySpy(void* data) {
 uint32_t SlaskSpy::GetSpyWidth(void* data) {
 	SlaskSpy *spy{static_cast<SlaskSpy *>(data)};
 	if (spy->graphics_ == nullptr) {
-		Logger::Info("Returning 1");
 		return 1;
 	}
 	return spy->graphics_->GetWidth();

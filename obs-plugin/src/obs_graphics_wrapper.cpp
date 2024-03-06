@@ -68,8 +68,8 @@ void OBSGraphicsWrapper::Render(gs_effect_t* effect) {
 			gs_matrix_scale(obj->GetScaling());
 			gs_draw_sprite_subregion(texture, 
 				obj->GetFlip(), 
-				0,
-				0,
+				draw_region->x, 
+				draw_region->y,
 				draw_region->width, 
 				draw_region->height
 			);
@@ -94,23 +94,23 @@ void OBSGraphicsWrapper::Update() {
 }
 
 bool OBSGraphicsWrapper::SetupScene(slask_spy::SkinSettings const *settings,
-				    Viewer *viewer)
+				    Viewer *viewer, std::string const& background)
 {
 	viewer_ = viewer;
-	auto background = settings->GetBackgroundSettings();
-	background_identifier_ = background.image;
-	graphics_[background.image] = new gs_image_file4_t();
+	background_identifier_ = background;
+	graphics_[background] =
+		new gs_image_file4_t();
 	std::string const path{};
 	gs_image_file4_init(
-		graphics_[background.image],
-		(std::string(settings->GetSkinPath()) + background.image)
+		graphics_[background],
+			    (std::string(settings->GetSkinPath()) +
+			     background)
 			.c_str(),
 		GS_IMAGE_ALPHA_PREMULTIPLY_SRGB);
 
-	auto const &buttons = settings->GetButtonSettings();
-	for (auto const &it : buttons) {
-		LoadGraphicsButton(&it,
-				   settings->GetSkinPath());
+	auto const &analogs = settings->GetAnalogSettings();
+	for (auto const &it : analogs) {
+		LoadGraphicsAnalog(&it, settings->GetSkinPath());
 	}
 
 	auto const &sticks = settings->GetStickSettings();
@@ -119,10 +119,11 @@ bool OBSGraphicsWrapper::SetupScene(slask_spy::SkinSettings const *settings,
 				   settings->GetSkinPath());
 	}
 
-	auto const &analogs = settings->GetAnalogSettings();
-	for (auto const &it : analogs) {
-		LoadGraphicsAnalog(&it, settings->GetSkinPath());
+	auto const &buttons = settings->GetButtonSettings();
+	for (auto const &it : buttons) {
+		LoadGraphicsButton(&it, settings->GetSkinPath());
 	}
+
 
 	bool result{true};
 	obs_enter_graphics();

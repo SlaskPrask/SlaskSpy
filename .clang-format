@@ -143,10 +143,7 @@ BraceWrapping:
   SplitEmptyFunction: false
   SplitEmptyRecord: false
   SplitEmptyNamespace: true
-BreakAfterAttributes: Never
-BreakArrays: false
 BreakBeforeConceptDeclarations: Allowed
-BreakBeforeInlineASMColon: OnlyMultiline
 BreakConstructorInitializers: AfterColon
 BreakInheritanceList: AfterComma
 ColumnLimit: 120
@@ -165,7 +162,6 @@ IndentRequiresClause: true
 IndentWidth: 4
 IndentWrappedFunctionNames: true
 InsertBraces: false
-InsertNewlineAtEOF: true
 KeepEmptyLinesAtTheStartOfBlocks: false
 LambdaBodyIndentation: Signature
 NamespaceIndentation: All
@@ -178,9 +174,7 @@ PPIndentWidth: -1
 PackConstructorInitializers: NextLine
 QualifierAlignment: Leave
 ReferenceAlignment: Right
-RemoveSemicolon: false
 RequiresClausePosition: WithPreceding
-RequiresExpressionIndentation: OuterScope
 SeparateDefinitionBlocks: Always
 ShortNamespaceLines: 1
 SortIncludes: false

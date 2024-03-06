@@ -33,6 +33,9 @@ public:
 	static bool OnControllerTypeChanged(obs_properties_t *properties,
 					   obs_property_t *type,
 					   obs_data_t *settings);
+	static bool OnSkinChanged(obs_properties_t *properties,
+					    obs_property_t *skin,
+					    obs_data_t *settings);
 
 	void TickSpy();
 	~SlaskSpy();
@@ -45,6 +48,7 @@ private:
 
 	int32_t com_port_;
 	std::string skin_path_;
+	std::string background_;
 	slask_spy::SkinSettings *skin_settings_;
 	slask_spy::OBSGraphicsWrapper *graphics_;
 	slask_spy::Viewer *viewer_;

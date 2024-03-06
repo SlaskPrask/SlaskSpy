@@ -13,29 +13,40 @@
 using slask_spy::SkinSettings;
 
 ViewerWindow::ViewerWindow(QWidget *parent,
-                           std::function<void()> close_callback,
-                           std::string_view skin_directory, int32_t com_index)
-    : QMainWindow(parent), ui(new Ui::ViewerWindow),
-      close_callback_{close_callback}, graphics_wrapper_{nullptr} {
-  ui->setupUi(this);
-  SkinSettings const *settings = SkinSettings::LoadSkinSettings(skin_directory);
-  graphics_wrapper_ = new QTGraphicsWrapper(ui->graphicsView);
-  graphics_wrapper_->SetupScene(settings, viewer);
+			   std::function<void()> close_callback,
+			   std::string_view skin_directory, int32_t com_index)
+	: QMainWindow(parent),
+	  ui(new Ui::ViewerWindow),
+	  close_callback_{close_callback},
+	  graphics_wrapper_{nullptr}
+{
+	ui->setupUi(this);
+	SkinSettings const *settings =
+		SkinSettings::LoadSkinSettings(skin_directory);
+	graphics_wrapper_ = new QTGraphicsWrapper(ui->graphicsView);
+	graphics_wrapper_->SetupScene(settings, viewer);
 
-  input_viewer_ = new InputViewer(new QTGraphicsWrapper(ui->graphicsView),
-                                  com_index, ViewerType::kN64);
+	input_viewer_ = new InputViewer(new QTGraphicsWrapper(ui->graphicsView),
+					com_index, ViewerType::kN64);
 
-  if (input_viewer_->Valid()) {
-    setFixedSize(input_viewer_->GetWindowWidth(),
-                 input_viewer_->GetWindowHeight());
-  }
+	if (input_viewer_->Valid()) {
+		setFixedSize(input_viewer_->GetWindowWidth(),
+			     input_viewer_->GetWindowHeight());
+	}
 }
 
-bool ViewerWindow::Valid() const { return input_viewer_->Valid(); }
+bool ViewerWindow::Valid() const
+{
+	return input_viewer_->Valid();
+}
 
-ViewerWindow::~ViewerWindow() { delete ui; }
+ViewerWindow::~ViewerWindow()
+{
+	delete ui;
+}
 
-void ViewerWindow::closeEvent(QCloseEvent *event) {
-  event->ignore();
-  close_callback_();
+void ViewerWindow::closeEvent(QCloseEvent *event)
+{
+	event->ignore();
+	close_callback_();
 }
