@@ -53,10 +53,10 @@ public:
 	static SkinSettings *LoadSkinSettings(std::string_view skin_directory,
 					      ViewerType type);
 
-	static bool
-	FetchSkins(std::string const &skins_directory,
-		   std::unordered_map<ViewerType,
-				      std::map<std::string, SkinData *>>& skins);
+	static bool FetchSkins(
+		std::string const &skins_directory,
+		std::unordered_map<ViewerType,
+				   std::map<std::string, SkinData *>> &skins);
 
 	std::vector<ButtonSetting> const &GetButtonSettings() const;
 	std::vector<StickSetting> const &GetStickSettings() const;
@@ -72,7 +72,7 @@ private:
 	bool CreateAnalogSetting(std::string const &line);
 	static std::string GetAttributeValue(std::string const &line,
 					     std::string const &name);
-	static std::tuple<std::vector<ViewerType>, std::string, SkinData*>
+	static std::tuple<std::vector<ViewerType>, std::string, SkinData *>
 	GetSkinData(std::string_view skin_path);
 
 	bool valid_;

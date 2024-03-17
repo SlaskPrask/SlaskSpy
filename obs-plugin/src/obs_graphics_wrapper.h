@@ -89,7 +89,7 @@ public:
 			  settings->direction == AnalogDirection::kUp),
 		  draw_params_{kDrawRegion},
 		  direction_{settings->direction},
-		  reversed_{settings->reverse},
+		  reversed_{settings->reverse ? 1U : 0U},
 		  flip_{static_cast<uint32_t>((settings->direction == AnalogDirection::kLeft
 				 ? GS_FLIP_U
 				 : 0) |
@@ -100,35 +100,33 @@ public:
 	~OBSInputAnalog() = default;
 
 	void Update(uint8_t analog) override{
-		const float percentage = analog / 255.f;
+		const float percentage = abs(reversed_ - analog / 255.f);
 
-		if (!reversed_) {
-			switch (direction_) {
-				case AnalogDirection::kLeft:
-				draw_params_.x = kDrawRegion.width -
-						 (static_cast<uint32_t>(
-							 kDrawRegion.width *
-							 percentage));
-				case AnalogDirection::kRight:
-					draw_params_.width = static_cast<uint32_t>(
-						kDrawRegion.width * percentage);
-					break;
-				case AnalogDirection::kUp:
-					draw_params_.y =
-						kDrawRegion.height -
+		switch (direction_) {
+			case AnalogDirection::kLeft:
+			draw_params_.x = (kDrawRegion.width -
 						(static_cast<uint32_t>(
-							kDrawRegion.height *
-							percentage));
-				case AnalogDirection::kDown:
-					draw_params_.height =
-						static_cast<uint32_t>(
-							kDrawRegion.height *
-							percentage);
-					break;
-			} 
-		} else {
-			// TODO (Implement Reversed)
-		}
+							kDrawRegion.width *
+							percentage)));
+				[[fallthrough]];
+			case AnalogDirection::kRight: // Fallthrough
+				draw_params_.width = (static_cast<uint32_t>(
+					kDrawRegion.width * percentage));
+				break;
+			case AnalogDirection::kUp:
+				draw_params_.y =
+					(kDrawRegion.height -
+					(static_cast<uint32_t>(
+						kDrawRegion.height *
+						percentage)));
+				[[fallthrough]];
+			case AnalogDirection::kDown:
+				draw_params_.height =
+					(static_cast<uint32_t>(
+						kDrawRegion.height *
+						percentage));
+				break;
+		} 
 	}
 
 	uint32_t GetFlip() const override { 
@@ -142,7 +140,7 @@ public:
 private:
 	DrawParams draw_params_;
 	AnalogDirection const direction_;
-	const bool reversed_;
+	const uint8_t reversed_;
 	const uint32_t flip_;
 };
 
